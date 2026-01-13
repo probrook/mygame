@@ -315,7 +315,7 @@
                 document.getElementById('loadingTip').style.display = 'block';
                 
                 // 1. 连接Ganache本地节点
-                web3 = new Web3('http://127.0.0.1:8545');
+                web3 = new Web3('http://127.0.0.1:7545');
                 // 获取Ganache第一个账户（索引0）
                 const accounts = await web3.eth.getAccounts();
                 playerAccount = accounts[0];
