@@ -150,136 +150,136 @@
         let accounts;
         let rouletteGameContract;
         // 替换为你部署的合约地址
-        const CONTRACT_ADDRESS = "YOUR_DEPLOYED_CONTRACT_ADDRESS";
+        const CONTRACT_ADDRESS = "0x7ED4F7eb6196b286b45Df010303fd4c1308fcaA7";
         // 合约ABI（从Remix复制）
         const CONTRACT_ABI = [
-            {
-                "inputs": [],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "player",
-                        "type": "address"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "enum RouletteGame.Difficulty",
-                        "name": "difficulty",
-                        "type": "uint8"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "randomNumber",
-                        "type": "uint256"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "bool",
-                        "name": "isWinner",
-                        "type": "bool"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "reward",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "GamePlayed",
-                "type": "event"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "enum RouletteGame.Difficulty",
-                        "name": "",
-                        "type": "uint8"
-                    }
-                ],
-                "name": "entryFee",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getContractBalance",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "enum RouletteGame.Difficulty",
-                        "name": "",
-                        "type": "uint8"
-                    }
-                ],
-                "name": "rewardMultiplier",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "owner",
-                "outputs": [
-                    {
-                        "internalType": "address",
-                        "name": "",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "enum RouletteGame.Difficulty",
-                        "name": "_difficulty",
-                        "type": "uint8"
-                    }
-                ],
-                "name": "playGame",
-                "outputs": [],
-                "stateMutability": "payable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "withdrawFunds",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
+            	{
+            		"inputs": [],
+            		"stateMutability": "nonpayable",
+            		"type": "constructor"
+            	},
+            	{
+            		"anonymous": false,
+            		"inputs": [
+            			{
+            				"indexed": true,
+            				"internalType": "address",
+            				"name": "player",
+            				"type": "address"
+            			},
+            			{
+            				"indexed": false,
+            				"internalType": "enum RouletteGame.Difficulty",
+            				"name": "difficulty",
+            				"type": "uint8"
+            			},
+            			{
+            				"indexed": false,
+            				"internalType": "uint256",
+            				"name": "randomNumber",
+            				"type": "uint256"
+            			},
+            			{
+            				"indexed": false,
+            				"internalType": "bool",
+            				"name": "isWinner",
+            				"type": "bool"
+            			},
+            			{
+            				"indexed": false,
+            				"internalType": "uint256",
+            				"name": "reward",
+            				"type": "uint256"
+            			}
+            		],
+            		"name": "GamePlayed",
+            		"type": "event"
+            	},
+            	{
+            		"inputs": [
+            			{
+            				"internalType": "enum RouletteGame.Difficulty",
+            				"name": "",
+            				"type": "uint8"
+            			}
+            		],
+            		"name": "entryFee",
+            		"outputs": [
+            			{
+            				"internalType": "uint256",
+            				"name": "",
+            				"type": "uint256"
+            			}
+            		],
+            		"stateMutability": "view",
+            		"type": "function"
+            	},
+            	{
+            		"inputs": [],
+            		"name": "getContractBalance",
+            		"outputs": [
+            			{
+            				"internalType": "uint256",
+            				"name": "",
+            				"type": "uint256"
+            			}
+            		],
+            		"stateMutability": "view",
+            		"type": "function"
+            	},
+            	{
+            		"inputs": [],
+            		"name": "owner",
+            		"outputs": [
+            			{
+            				"internalType": "address",
+            				"name": "",
+            				"type": "address"
+            			}
+            		],
+            		"stateMutability": "view",
+            		"type": "function"
+            	},
+            	{
+            		"inputs": [
+            			{
+            				"internalType": "enum RouletteGame.Difficulty",
+            				"name": "_difficulty",
+            				"type": "uint8"
+            			}
+            		],
+            		"name": "playGame",
+            		"outputs": [],
+            		"stateMutability": "payable",
+            		"type": "function"
+            	},
+            	{
+            		"inputs": [
+            			{
+            				"internalType": "enum RouletteGame.Difficulty",
+            				"name": "",
+            				"type": "uint8"
+            			}
+            		],
+            		"name": "rewardMultiplier",
+            		"outputs": [
+            			{
+            				"internalType": "uint256",
+            				"name": "",
+            				"type": "uint256"
+            			}
+            		],
+            		"stateMutability": "view",
+            		"type": "function"
+            	},
+            	{
+            		"inputs": [],
+            		"name": "withdrawFunds",
+            		"outputs": [],
+            		"stateMutability": "nonpayable",
+            		"type": "function"
+            	}
+            ];
 
         // 2. 页面加载完成后初始化
         window.addEventListener('load', async () => {
