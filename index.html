@@ -2,162 +2,156 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>轮盘游戏 - 无事件依赖版</title>
+    <title>轮盘游戏 - 修复版</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 0 20px; text-align: center; }
-        h1 { color: #333; margin-bottom: 40px; }
-        .btn-group { margin-bottom: 30px; }
-        .game-btn { 
-            padding: 18px 36px; margin: 0 10px; 
-            font-size: 18px; cursor: pointer; 
-            background: #2196F3; color: white; 
-            border: none; border-radius: 8px;
-            transition: background 0.3s;
+        /* 保留你原有样式，新增转盘样式 */
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; text-align: center; }
+        .btn { padding: 15px 30px; margin: 10px; font-size: 18px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
+        .btn:hover { background: #45a049; }
+        #result { margin-top: 20px; font-size: 20px; }
+        /* 转盘样式 */
+        #roulette {
+            width: 300px; height: 300px; border-radius: 50%; 
+            border: 5px solid #333; margin: 30px auto;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; font-weight: bold; background: #f5f5f5;
+            transition: all 0.8s ease; /* 旋转动画 */
         }
-        .game-btn:hover { background: #1976D2; }
-        .game-btn:active { background: #0D47A1; }
-        #result-box { 
-            padding: 20px; border-radius: 8px; 
-            margin-top: 20px; min-height: 80px;
-            font-size: 18px;
-        }
-        .success { color: #4CAF50; background: #f1f8e9; }
-        .error { color: #F44336; background: #ffebee; }
-        .loading { color: #FF9800; background: #fff8e1; }
+        .win { color: #4CAF50; } /* 胜利数字颜色 */
+        .lose { color: #F44336; } /* 失败数字颜色 */
     </style>
 </head>
 <body>
     <h1>轮盘游戏</h1>
-    <div class="btn-group">
-        <button class="game-btn" onclick="playGame(0)">简单难度 (0.001 ETH)</button>
-        <button class="game-btn" onclick="playGame(1)">中等难度 (0.002 ETH)</button>
-        <button class="game-btn" onclick="playGame(2)">困难难度 (0.005 ETH)</button>
-    </div>
-    <div id="result-box">点击上方按钮开始游戏</div>
+    <!-- 转盘容器（核心新增） -->
+    <div id="roulette">0</div>
+    <!-- 你的原有按钮 -->
+    <button class="btn" onclick="playGame(0)">简单难度 (0.001 ETH)</button>
+    <button class="btn" onclick="playGame(1)">中等难度 (0.002 ETH)</button>
+    <button class="btn" onclick="playGame(2)">困难难度 (0.005 ETH)</button>
+    <!-- 结果展示 -->
+    <div id="result"></div>
 
-    <!-- 引入Web3.js -->
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <!-- 修复Web3依赖（国内可访问CDN） -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/web3/1.10.0/web3.min.js"></script>
     <script>
-        // ===================== 配置项（只改这里！）=====================
-        const CONTRACT_ADDRESS = "替换成你新部署的合约地址"; // 部署新合约后填这里
-        const GANACHE_RPC = "http://127.0.0.1:7545"; // Ganache默认RPC，不用改
-        // =============================================================
+        // 全局配置（只改这里的合约地址！）
+        const CONTRACT_ADDRESS = "你新部署的带getGameResult的合约地址"; 
+        const GANACHE_RPC = "http://127.0.0.1:7545";
+        let currentDifficulty; // 记录当前选择的难度（用于转盘颜色）
 
-        // 全局变量
-        let web3;
-        let rouletteContract;
-        let currentAccount;
-
-        // 初始化Web3和合约
-        async function initWeb3() {
-            const resultBox = document.getElementById("result-box");
-            try {
-                // 连接MetaMask或Ganache
-                if (window.ethereum) {
-                    web3 = new Web3(window.ethereum);
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    currentAccount = (await web3.eth.getAccounts())[0];
-                } else {
-                    web3 = new Web3(new Web3.providers.HttpProvider(GANACHE_RPC));
-                    currentAccount = (await web3.eth.getAccounts())[0];
-                }
-
-                // 合约ABI（仅包含必要方法，无事件）
-                const contractABI = [
-                    {
-                        "inputs": [{ "name": "_difficulty", "type": "uint8" }],
-                        "name": "playGame",
-                        "outputs": [],
-                        "stateMutability": "payable",
-                        "type": "function"
-                    },
-                    {
-                        "inputs": [
-                            { "name": "player", "type": "address" },
-                            { "name": "_difficulty", "type": "uint8" },
-                            { "name": "blockNumber", "type": "uint256" }
-                        ],
-                        "name": "getGameResult",
-                        "outputs": [
-                            { "name": "randomNumber", "type": "uint256" },
-                            { "name": "isWinner", "type": "bool" },
-                            { "name": "reward", "type": "uint256" }
-                        ],
-                        "stateMutability": "view",
-                        "type": "function"
-                    }
-                ];
-
-                // 创建合约实例（核心：避免undefined）
-                rouletteContract = new web3.eth.Contract(contractABI, CONTRACT_ADDRESS);
-                resultBox.textContent = "✅ 初始化成功，已连接钱包：" + currentAccount.substring(0, 8) + "...";
-                resultBox.className = "success";
-            } catch (err) {
-                resultBox.textContent = "❌ 初始化失败：" + err.message;
-                resultBox.className = "error";
-                console.error("初始化错误：", err);
-            }
-        }
-
-        // 核心游戏函数（无事件依赖）
+        // ===================== 保留你原有核心逻辑，只修复报错 =====================
         async function playGame(difficulty) {
-            const resultBox = document.getElementById("result-box");
-            // 重置结果框
-            resultBox.textContent = "⏳ 交易处理中，请确认MetaMask弹窗...";
-            resultBox.className = "loading";
+            currentDifficulty = difficulty; // 记录难度
+            const resultDom = document.getElementById("result");
+            resultDom.textContent = "交易处理中，请确认MetaMask弹窗...";
+            
+            // 1. 修复Web3初始化 + 账户undefined问题
+            if (!window.web3) {
+                if (window.ethereum) {
+                    window.web3 = new Web3(window.ethereum);
+                    try {
+                        await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    } catch (err) {
+                        resultDom.textContent = "❌ 请先连接MetaMask钱包！";
+                        return;
+                    }
+                } else {
+                    window.web3 = new Web3(new Web3.providers.HttpProvider(GANACHE_RPC));
+                }
+            }
+            const web3 = window.web3;
+            
+            // 修复：加判断避免读取undefined[0]
+            const accounts = await web3.eth.getAccounts();
+            const playerAccount = accounts[0];
+            if (!playerAccount) {
+                resultDom.textContent = "❌ 未检测到钱包账户！";
+                return;
+            }
+
+            // 2. 保留你原有ABI（只新增getGameResult）
+            const abi = [
+                {
+                    "inputs": [{ "name": "_difficulty", "type": "uint8" }],
+                    "name": "playGame",
+                    "outputs": [],
+                    "stateMutability": "payable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        { "name": "player", "type": "address" },
+                        { "name": "_difficulty", "type": "uint8" },
+                        { "name": "blockNumber", "type": "uint256" }
+                    ],
+                    "name": "getGameResult",
+                    "outputs": [
+                        { "name": "randomNumber", "type": "uint256" },
+                        { "name": "isWinner", "type": "bool" },
+                        { "name": "reward", "type": "uint256" }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ];
+            const contract = new web3.eth.Contract(abi, CONTRACT_ADDRESS);
+
+            // 3. 保留你原有入场费逻辑
+            let entryFee;
+            if (difficulty === 0) entryFee = web3.utils.toWei("0.001", "ether");
+            else if (difficulty === 1) entryFee = web3.utils.toWei("0.002", "ether");
+            else entryFee = web3.utils.toWei("0.005", "ether");
 
             try {
-                // 检查初始化
-                if (!rouletteContract) await initWeb3();
-                if (!currentAccount) throw new Error("未检测到钱包账户");
+                // 4. 保留你原有交易发送逻辑（删除所有事件监听）
+                const txReceipt = await contract.methods.playGame(difficulty)
+                    .send({ from: playerAccount, value: entryFee, gas: 300000 });
 
-                // 设置入场费
-                let entryFee;
-                switch (difficulty) {
-                    case 0: entryFee = web3.utils.toWei("0.001", "ether"); break;
-                    case 1: entryFee = web3.utils.toWei("0.002", "ether"); break;
-                    case 2: entryFee = web3.utils.toWei("0.005", "ether"); break;
-                    default: throw new Error("无效的难度选择");
-                }
-
-                // 发送playGame交易（不监听任何事件）
-                const txReceipt = await rouletteContract.methods.playGame(difficulty)
-                    .send({
-                        from: currentAccount,
-                        value: entryFee,
-                        gas: 300000 // 足够的Gas
-                    });
-
-                // 交易成功后，调用getGameResult获取结果（核心替代事件）
+                // 5. 核心修改：用getGameResult替代GamePlayed事件
                 const blockNumber = txReceipt.blockNumber;
-                const [randomNumber, isWinner, reward] = await rouletteContract.methods
-                    .getGameResult(currentAccount, difficulty, blockNumber)
-                    .call({ from: currentAccount });
+                const [randomNumber, isWinner, reward] = await contract.methods
+                    .getGameResult(playerAccount, difficulty, blockNumber)
+                    .call({ from: playerAccount });
 
-                // 格式化奖励（转ETH）
+                // 6. 保留你原有结果展示 + 新增转盘更新
                 const rewardEth = web3.utils.fromWei(reward, "ether");
+                const resultText = isWinner 
+                    ? `🎉 游戏胜利！随机数：${randomNumber}，奖励：${rewardEth} ETH` 
+                    : `😥 游戏失败！随机数：${randomNumber}，奖励：0 ETH`;
+                resultDom.textContent = resultText;
                 
-                // 展示结果
-                if (isWinner) {
-                    resultBox.textContent = `🎉 游戏胜利！
-随机数：${randomNumber} | 奖励：${rewardEth} ETH`;
-                    resultBox.className = "success";
-                } else {
-                    resultBox.textContent = `😥 游戏失败！
-随机数：${randomNumber} | 奖励：0 ETH`;
-                    resultBox.className = "error";
-                }
+                // 更新转盘数字和动画
+                updateRoulette(randomNumber, isWinner);
 
             } catch (err) {
-                resultBox.textContent = "❌ 游戏失败：" + err.message;
-                resultBox.className = "error";
-                console.error("游戏错误：", err);
+                resultDom.textContent = "❌ 游戏失败：" + err.message;
+                console.error("错误详情：", err);
             }
         }
 
-        // 页面加载自动初始化
-        window.onload = initWeb3;
+        // ===================== 新增：转盘显示功能（不影响原有逻辑） =====================
+        // 更新转盘数字+旋转动画+胜负颜色
+        function updateRoulette(num, isWinner) {
+            const roulette = document.getElementById("roulette");
+            // 旋转动画：数字对应角度（360/100=3.6度 per 数字）
+            roulette.style.transform = `rotate(${num * 3.6}deg)`;
+            roulette.textContent = num;
+            // 胜负颜色区分
+            roulette.className = isWinner ? "win" : "lose";
+        }
+
+        // 页面加载初始化（保留你原有逻辑）
+        window.onload = function() {
+            // 自动连接钱包（保留）
+            if (window.ethereum) {
+                window.ethereum.request({ method: 'eth_requestAccounts' }).catch(err => {
+                    console.log("未连接钱包，可手动点击按钮后授权");
+                });
+            }
+            // 初始化转盘（默认显示0）
+            document.getElementById("roulette").textContent = "0";
+        };
     </script>
 </body>
 </html>
