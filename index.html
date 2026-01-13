@@ -2,74 +2,156 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>区块链随机转盘游戏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>以太坊随机转盘游戏</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
-        .container { text-align: center; }
-        h1 { color: #333; margin-bottom: 30px; }
-        
-        /* 转盘样式 */
-        #roulette {
-            width: 400px; height: 400px; border-radius: 50%;
-            border: 8px solid #2c3e50; margin: 0 auto 30px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 60px; font-weight: bold; color: #fff;
-            background: linear-gradient(135deg, #3498db, #9b59b6);
-            transition: all 1s ease-in-out;
-            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
         }
-        
-        /* 按钮样式 */
-        .btn-group { margin: 20px 0; }
-        .game-btn {
-            padding: 15px 30px; margin: 0 10px;
-            font-size: 18px; cursor: pointer;
-            border: none; border-radius: 8px;
-            color: #fff; transition: all 0.3s;
+        body {
+            background: #f0f2f5;
+            padding: 20px;
         }
-        .easy { background: #2ecc71; }
-        .medium { background: #f39c12; }
-        .hard { background: #e74c3c; }
-        .game-btn:hover { opacity: 0.9; transform: scale(1.05); }
-        
-        /* 结果展示 */
-        #result {
-            font-size: 20px; margin-top: 20px;
-            padding: 15px; border-radius: 8px;
-            background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .success { color: #2ecc71; }
-        .error { color: #e74c3c; }
-        .loading { color: #3498db; }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .wallet-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e1e4e8;
+            border-radius: 5px;
+        }
+        #connectBtn {
+            background: #4267b2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #connectBtn:hover {
+            background: #365899;
+        }
+        .game-section {
+            margin-top: 30px;
+        }
+        .difficulty-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .diff-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
+        }
+        .easy {
+            background: #2ecc71;
+        }
+        .medium {
+            background: #f39c12;
+        }
+        .hard {
+            background: #e74c3c;
+        }
+        .roulette {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 10px solid #34495e;
+            margin: 30px auto;
+            position: relative;
+            overflow: hidden;
+        }
+        .roulette-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            display: none;
+        }
+        .result-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .wallet-info {
+            margin-top: 10px;
+            color: #34495e;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>区块链随机转盘游戏</h1>
-        <!-- 转盘容器 -->
-        <div id="roulette">0</div>
+        <h1>以太坊随机转盘游戏</h1>
         
-        <!-- 难度按钮 -->
-        <div class="btn-group">
-            <button class="game-btn easy" onclick="playGame(0)">简单模式 (0.001 ETH)</button>
-            <button class="game-btn medium" onclick="playGame(1)">中等模式 (0.002 ETH)</button>
-            <button class="game-btn hard" onclick="playGame(2)">困难模式 (0.005 ETH)</button>
+        <!-- 钱包连接区域 -->
+        <div class="wallet-section">
+            <button id="connectBtn">连接MetaMask钱包</button>
+            <div class="wallet-info" id="walletInfo"></div>
         </div>
         
-        <!-- 结果展示 -->
-        <div id="result">点击按钮开始游戏</div>
+        <!-- 游戏区域 -->
+        <div class="game-section" id="gameSection" class="hidden">
+            <h2>选择游戏难度</h2>
+            <div class="difficulty-buttons">
+                <button class="diff-btn easy" onclick="playGame(0)">简单模式 (≥51胜) - 0.001ETH</button>
+                <button class="diff-btn medium" onclick="playGame(1)">中等模式 (≥71胜) - 0.002ETH</button>
+                <button class="diff-btn hard" onclick="playGame(2)">困难模式 (≥91胜) - 0.005ETH</button>
+            </div>
+            
+            <!-- 转盘展示 -->
+            <div class="roulette">
+                <div class="roulette-number" id="randomNumber">?</div>
+            </div>
+            
+            <!-- 结果展示 -->
+            <div class="result-section" id="resultSection">
+                <div class="result-title" id="resultTitle"></div>
+                <p>随机数: <span id="resultNumber"></span></p>
+                <p>奖励: <span id="resultReward"></span> ETH</p>
+            </div>
+        </div>
     </div>
 
-    <!-- 引入Web3.js -->
-    <script src="https://cdn.bootcdn.net/ajax/libs/web3/1.10.0/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.8.0/dist/web3.min.js"></script>
     <script>
-        // 配置项（替换为你的合约地址）
-        const CONTRACT_ADDRESS = "0x你的合约地址";
-        const GANACHE_RPC = "http://127.0.0.1:7545";
-        let currentDifficulty;
-
-        // 合约ABI（从Remix复制的完整ABI）
+        // 1. 初始化变量
+        let web3;
+        let accounts;
+        let rouletteGameContract;
+        // 替换为你部署的合约地址
+        const CONTRACT_ADDRESS = "YOUR_DEPLOYED_CONTRACT_ADDRESS";
+        // 合约ABI（从Remix复制）
         const CONTRACT_ABI = [
             {
                 "inputs": [],
@@ -134,44 +216,11 @@
             },
             {
                 "inputs": [],
-                "name": "fundContract",
-                "outputs": [],
-                "stateMutability": "payable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "player",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "enum RouletteGame.Difficulty",
-                        "name": "_difficulty",
-                        "type": "uint8"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "blockNumber",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "getGameResult",
+                "name": "getContractBalance",
                 "outputs": [
                     {
                         "internalType": "uint256",
-                        "name": "randomNumber",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "isWinner",
-                        "type": "bool"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "reward",
+                        "name": "",
                         "type": "uint256"
                     }
                 ],
@@ -179,8 +228,14 @@
                 "type": "function"
             },
             {
-                "inputs": [],
-                "name": "getContractBalance",
+                "inputs": [
+                    {
+                        "internalType": "enum RouletteGame.Difficulty",
+                        "name": "",
+                        "type": "uint8"
+                    }
+                ],
+                "name": "rewardMultiplier",
                 "outputs": [
                     {
                         "internalType": "uint256",
@@ -218,148 +273,108 @@
                 "type": "function"
             },
             {
-                "inputs": [
-                    {
-                        "internalType": "enum RouletteGame.Difficulty",
-                        "name": "",
-                        "type": "uint8"
-                    }
-                ],
-                "name": "rewardMultiplier",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
                 "inputs": [],
                 "name": "withdrawFunds",
                 "outputs": [],
                 "stateMutability": "nonpayable",
                 "type": "function"
-            },
-            {
-                "stateMutability": "payable",
-                "type": "fallback"
-            },
-            {
-                "stateMutability": "payable",
-                "type": "receive"
             }
         ];
 
-        // 初始化Web3和钱包
-        async function initWeb3() {
+        // 2. 页面加载完成后初始化
+        window.addEventListener('load', async () => {
+            // 检查是否安装了MetaMask
             if (window.ethereum) {
-                window.web3 = new Web3(window.ethereum);
-                try {
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    return true;
-                } catch (err) {
-                    alert("请授权MetaMask钱包访问！");
-                    return false;
-                }
+                web3 = new Web3(window.ethereum);
+                document.getElementById('connectBtn').addEventListener('click', connectWallet);
             } else {
-                // 备用：直接连接Ganache
-                window.web3 = new Web3(new Web3.providers.HttpProvider(GANACHE_RPC));
-                return true;
+                alert("请安装MetaMask钱包！");
             }
-        }
+        });
 
-        // 核心游戏函数
-        async function playGame(difficulty) {
-            currentDifficulty = difficulty;
-            const resultDom = document.getElementById("result");
-            const rouletteDom = document.getElementById("roulette");
-            
-            // 重置状态
-            resultDom.textContent = "交易处理中，请确认MetaMask弹窗...";
-            resultDom.className = "loading";
-            rouletteDom.textContent = "0";
-            rouletteDom.style.transform = "rotate(0deg)";
-
-            // 初始化Web3
-            const initSuccess = await initWeb3();
-            if (!initSuccess) return;
-
-            const web3 = window.web3;
-            const accounts = await web3.eth.getAccounts();
-            const playerAccount = accounts[0];
-            if (!playerAccount) {
-                resultDom.textContent = "未检测到钱包账户，请连接MetaMask！";
-                resultDom.className = "error";
-                return;
-            }
-
-            // 创建合约实例
-            const contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-
-            // 设置入场费
-            let entryFee;
-            if (difficulty === 0) entryFee = web3.utils.toWei("0.001", "ether");
-            else if (difficulty === 1) entryFee = web3.utils.toWei("0.002", "ether");
-            else entryFee = web3.utils.toWei("0.005", "ether");
-
+        // 3. 连接MetaMask钱包
+        async function connectWallet() {
             try {
-                // 发送交易调用游戏函数
-                const txReceipt = await contract.methods.playGame(difficulty)
-                    .send({
-                        from: playerAccount,
-                        value: entryFee,
-                        gas: 300000
-                    });
-
-                // 查询游戏结果
-                const blockNumber = txReceipt.blockNumber;
-                const [randomNumber, isWinner, reward] = await contract.methods
-                    .getGameResult(playerAccount, difficulty, blockNumber)
-                    .call({ from: playerAccount });
-
-                // 格式化奖励
-                const rewardEth = web3.utils.fromWei(reward, "ether");
+                // 请求账户授权
+                accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
                 
-                // 更新结果展示
-                if (isWinner) {
-                    resultDom.textContent = `🎉 游戏胜利！
-随机数：${randomNumber} | 奖励：${rewardEth} ETH`;
-                    resultDom.className = "success";
-                } else {
-                    resultDom.textContent = `😥 游戏失败！
-随机数：${randomNumber} | 奖励：0 ETH`;
-                    resultDom.className = "error";
-                }
-
-                // 更新转盘动画
-                updateRoulette(randomNumber, isWinner);
-
-            } catch (err) {
-                resultDom.textContent = `❌ 游戏失败：${err.message}`;
-                resultDom.className = "error";
-                console.error("游戏错误：", err);
+                // 显示钱包信息
+                document.getElementById('walletInfo').innerHTML = `
+                    <p>已连接钱包: ${account.substring(0, 6)}...${account.substring(38)}</p>
+                    <p>网络: ${await getNetworkName()}</p>
+                `;
+                
+                // 初始化合约
+                rouletteGameContract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                
+                // 显示游戏区域
+                document.getElementById('gameSection').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error("连接钱包失败:", error);
+                alert("连接钱包失败：" + error.message);
             }
         }
 
-        // 更新转盘显示
-        function updateRoulette(num, isWinner) {
-            const roulette = document.getElementById("roulette");
-            // 旋转动画：360/100=3.6度 per 数字
-            roulette.style.transform = `rotate(${num * 3.6}deg)`;
-            roulette.textContent = num;
-            // 胜负颜色区分
-            roulette.style.background = isWinner 
-                ? "linear-gradient(135deg, #2ecc71, #27ae60)" 
-                : "linear-gradient(135deg, #e74c3c, #c0392b)";
+        // 4. 获取当前网络名称
+        async function getNetworkName() {
+            const chainId = await web3.eth.getChainId();
+            switch(chainId) {
+                case 1: return "以太坊主网";
+                case 5: return "Goerli测试网";
+                case 11155111: return "Sepolia测试网";
+                case 1337: return "Ganache本地测试网";
+                default: return "未知网络 (" + chainId + ")";
+            }
         }
 
-        // 页面加载初始化
-        window.onload = function() {
-            initWeb3();
-        };
+        // 5. 参与游戏
+        async function playGame(difficulty) {
+            try {
+                // 隐藏之前的结果
+                document.getElementById('resultSection').style.display = 'none';
+                document.getElementById('randomNumber').textContent = '?';
+                
+                // 获取对应难度的参与费用
+                let entryFee;
+                if (difficulty === 0) entryFee = web3.utils.toWei('0.001', 'ether'); // 简单
+                else if (difficulty === 1) entryFee = web3.utils.toWei('0.002', 'ether'); // 中等
+                else entryFee = web3.utils.toWei('0.005', 'ether'); // 困难
+                
+                // 调用合约的playGame方法
+                await rouletteGameContract.methods.playGame(difficulty)
+                    .send({
+                        from: accounts[0],
+                        value: entryFee
+                    })
+                    .on('transactionHash', (hash) => {
+                        alert("交易已提交，哈希：" + hash);
+                    })
+                    .on('receipt', (receipt) => {
+                        // 解析事件获取游戏结果
+                        const event = receipt.events.GamePlayed;
+                        const randomNum = event.returnValues.randomNumber;
+                        const isWinner = event.returnValues.isWinner;
+                        const reward = web3.utils.fromWei(event.returnValues.reward, 'ether');
+                        
+                        // 显示转盘数字
+                        document.getElementById('randomNumber').textContent = randomNum;
+                        
+                        // 显示结果
+                        const resultTitle = document.getElementById('resultTitle');
+                        resultTitle.textContent = isWinner ? "🎉 恭喜你获胜！" : "😥 很遗憾，你失败了";
+                        resultTitle.style.color = isWinner ? "#2ecc71" : "#e74c3c";
+                        document.getElementById('resultNumber').textContent = randomNum;
+                        document.getElementById('resultReward').textContent = isWinner ? reward : "0";
+                        document.getElementById('resultSection').style.display = 'block';
+                    });
+                
+            } catch (error) {
+                console.error("游戏失败:", error);
+                alert("游戏失败：" + error.message);
+            }
+        }
     </script>
 </body>
 </html>
