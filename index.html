@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>以太坊随机转盘小游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #559de4;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .wallet-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e1e4e8;
+            border-radius: 5px;
+        }
+        .wallet-info {
+            margin-top: 10px;
+            color: #34495e;
+            font-weight: 500;
+        }
+        .game-section {
+            margin-top: 30px;
+        }
+        .difficulty-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .diff-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
+            transition: background 0.3s ease;
+        }
+        .diff-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .easy {
+            background: #2ecc71;
+        }
+        .medium {
+            background: #f39c12;
+        }
+        .hard {
+            background: #e74c3c;
+        }
+        /* 转盘样式 - 实现转动动画 */
+        .roulette-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px auto;
+            position: relative;
+        }
+        .roulette {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 10px solid #e85b48;
+            position: relative;
+            overflow: hidden;
+            transition: transform 5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            background: conic-gradient(
+                #faf8f8 0% 10%,
+                #e4a53f 10% 20%,
+                #e8d93e 20% 30%,
+                #30e490 30% 40%,
+                #2bd2e4 40% 50%,
+                #2e8bdc 50% 60%,
+                #213cd6 60% 70%,
+                #6c2ae7 70% 80%,
+                #bc27e6 80% 90%,
+                #ef1111 90% 100%
+            );
+        }
+        .roulette::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: 50%;
+            transform: translateX(50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #e74c3c;
+            z-index: 10;
+        }
+        .roulette-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #2c3e50;
+            background: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .reward-text {
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        .wallet-connected-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4267b2;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.5s ease;
+        }
+        @keyframes slideIn {
+            from { top: -100px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+        /* 胜利/失败动画样式 */
+        .win-animation {
+            animation: winPulse 1s infinite alternate;
+        }
+        @keyframes winPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+        .lose-animation {
+            animation: loseShake 0.5s ease;
+        }
+        @keyframes loseShake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 钱包连接提示弹窗 -->
+    <div class="wallet-connected-alert" id="walletAlert">已连接钱包 0xCf285...8344e</div>
+    
+    <div class="container">
+        <h1>以太坊随机转盘小游戏</h1>
+        
+        <!-- 钱包信息区域 -->
+        <div class="wallet-section">
+            <div class="wallet-info">
+                <p>当前连接钱包: 0xCf285...8344e</p>
+                <p>网络: 1337</p>
+            </div>
+        </div>
+        
+        <!-- 游戏区域 -->
+        <div class="game-section">
+            <h2>选择游戏难度</h2>
+            <div class="difficulty-buttons">
+                <button class="diff-btn easy" onclick="playGame(0)">简单模式 (>50胜) - 0.001ETH</button>
+                <button class="diff-btn medium" onclick="playGame(1)">中等模式 (>70胜) - 0.002ETH</button>
+                <button class="diff-btn hard" onclick="playGame(2)">困难模式 (>90胜) - 0.005ETH</button>
+            </div>
+            
+            <!-- 转盘展示 -->
+            <div class="roulette-container">
+                <div class="roulette" id="roulette">
+                    <div class="roulette-number" id="randomNumber">?</div>
+                </div>
+            </div>
+            
+            <!-- 结果展示 -->
+            <div class="result-section" id="resultSection">
+                <div class="result-title" id="resultTitle"></div>
+                <p>随机数: <span id="resultNumber"></span></p>
+                <p class="reward-text">奖励: <span id="resultReward"></span> ETH</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成后显示钱包连接提示
+        window.addEventListener('load', () => {
+            // 显示钱包连接提示，3秒后自动消失
+            const walletAlert = document.getElementById('walletAlert');
+            setTimeout(() => {
+                walletAlert.style.opacity = '0';
+                walletAlert.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => walletAlert.remove(), 500);
+            }, 3000);
+            
+            // 初始化转盘状态
+            document.getElementById('resultSection').style.display = 'none';
+        });
+
+        // 游戏核心逻辑
+        async function playGame(difficulty) {
+            try {
+                // 重置界面状态
+                const roulette = document.getElementById('roulette');
+                const resultSection = document.getElementById('resultSection');
+                const randomNumberEl = document.getElementById('randomNumber');
+                
+                // 隐藏结果、重置转盘数字
+                resultSection.style.display = 'none';
+                randomNumberEl.textContent = '?';
+                roulette.classList.remove('win-animation', 'lose-animation');
+                
+                // 随机生成0-100的数字
+                const randomNum = Math.floor(Math.random() * 101);
+                
+                // 计算转盘旋转角度（模拟转动效果）
+                const rotateDeg = 360 * 10 + (randomNum * 3.6); // 转10圈 + 对应数字角度
+                roulette.style.transform = `rotate(${rotateDeg}deg)`;
+                
+                // 转盘停止后显示结果（延迟5秒，匹配动画时长）
+                setTimeout(() => {
+                    // 更新转盘数字
+                    randomNumberEl.textContent = randomNum;
+                    
+                    // 根据难度判断胜负
+                    let isWinner = false;
+                    let reward = 0;
+                    const rewardMultipliers = [2, 3, 5]; // 简单/中等/困难奖励倍数
+                    const winThresholds = [51, 71, 91];   // 简单/中等/困难胜利阈值
+                    const entryFees = [0.001, 0.002, 0.005]; // 参与费用
+                    
+                    // 判断是否获胜
+                    if (randomNum >= winThresholds[difficulty]) {
+                        isWinner = true;
+                        reward = (entryFees[difficulty] * rewardMultipliers[difficulty]).toFixed(4);
+                        roulette.classList.add('win-animation');
+                    } else {
+                        reward = 0;
+                        roulette.classList.add('lose-animation');
+                    }
+                    
+                    // 更新结果展示
+                    const resultTitle = document.getElementById('resultTitle');
+                    resultTitle.textContent = isWinner ? "🎉 恭喜你获胜！" : "😥 很遗憾，你失败了";
+                    resultTitle.style.color = isWinner ? "#2ecc71" : "#e74c3c";
+                    document.getElementById('resultNumber').textContent = randomNum;
+                    document.getElementById('resultReward').textContent = reward;
+                    
+                    // 显示结果区域
+                    resultSection.style.display = 'block';
+                }, 5000);
+                
+            } catch (error) {
+                console.error("游戏出错:", error);
+                alert("游戏出错：" + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
